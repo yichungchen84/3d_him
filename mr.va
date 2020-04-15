@@ -1,0 +1,100 @@
+// VerilogA Memristor/RRAM model
+// switching model, (threshold voltage controlling HRS/LRS)
+// Created by Yi-Chung Chen. NYU-Poly, Jul. 15th, 2011
+// revised and simplified, Oct. 1st, 2013
+// "mr" is the name for calling memristor/rram.
+// External variable: rh, rl, vth, vtl, s, ft. (see definitions below)
+// any problem, please contact: YiChung.Chen.84@gmail.com 
+
+`include "constants.vams"
+`include "disciplines.vams"
+
+module mr(u,b);
+
+    inout u,b;
+    electrical u,b;
+    
+    /////////////////////////////
+    parameter real rh=100000;  // resistance of high resistance state (HRS)
+    parameter real rl=20000;   // resistance of low resistance state (LRS)
+    parameter real vth=0.5;    // threshold point from high to low resistance state
+    parameter real vtl=-0.5;   // threshold point from low to high resistance state
+    parameter integer s=0;     // initial state
+    parameter real ft=1.8E-9;  // forming (programmming) time, 
+                            // how much time does it need to successfully program memory cell? 
+                            // (how long does it need to keep voltage?)
+    /////////////////////////////
+
+    real r;                    // resistance variable
+    real vin;                  // input voltage variable
+    real t;                    // time variable
+    integer f_s;               // program froward sign
+    integer r_s;               // program reverse sign
+    integer q;                 // state variable
+
+    analog begin
+
+        @ ( initial_step) begin // load state from previous state
+            q=s;
+            f_s=0;
+            r_s=0; 
+        end
+
+        vin=V(u,b);
+
+        if (q==0) begin // high resistance state
+            if (vin<vth) begin // high resistance
+                r=rh;
+                f_s=0;
+                r_s=0;
+            end
+            else if (vin>=vth) begin // low resistance switching
+                r_s=0;
+                if (f_s==0) begin
+                    t=$abstime;
+                    f_s=1;
+                    r=rh;
+                end
+                else if (f_s==1) begin
+                    if (($abstime-t)>=ft ) begin
+                        q=1;
+                        r=rl;
+                        f_s=0;
+                    end 
+                    else if (($abstime-t)<ft ) begin
+                        r=rh;
+                    end
+                end
+            end
+        end
+        if (q==1) begin // low resistance state 
+            if (vin>vtl) begin
+                r=rl;
+                f_s=0;
+                r_s=0;
+            end
+            else if (vin<=vtl) begin
+                f_s=0;
+                if (r_s==0) begin
+                    t=$abstime;
+                    r=rl;
+                    r_s=1;
+                end
+                else if (r_s==1) begin
+                    if (($abstime-t)>=ft ) begin
+                        q=0;
+                        r=rh;
+                        r_s=0;
+                    end
+                    else if (($abstime-t)<ft ) begin
+                        r=rl;
+                    end
+                end
+            end
+        end
+        
+        I(u,b) <+ vin/r; //output current
+
+    end
+
+endmodule
