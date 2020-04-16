@@ -144,7 +144,6 @@ void output(std::stringstream& tempMainStream, int& numberColumn, int& numberRow
     
     const char *WB  = "wb";
     bool first = true;
-    int resistance = 100;
     
     for( int cx = 1; cx <= numberlayer; ++cx )
 	{
@@ -502,7 +501,7 @@ void print_usage(char * argv0)
 	std::cerr << "		string, define sheet resistance" << "\n";
 	std::cerr << " -lr  <100>" << "\n";
 	std::cerr << "		string, define load resistance" << "\n";
-	std::cerr << " -gn  <2.5>" << "\n";
+	std::cerr << " -gn  <vss>" << "\n";
 	std::cerr << "		string, define ground node" << "\n";
 	std::cerr << " -vs  <0.1>" << "\n";
 	std::cerr << "		string, define drive voltage" << "\n";
